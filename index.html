@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NazSatis - Ultimate Fidgets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
+            --bg-dark: #0a0a0c;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            color: white;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        /* Snap Feed Container */
+        #feed-container {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #feed-container::-webkit-scrollbar { display: none; }
+
+        .fidget-section {
+            height: 100vh;
+            width: 100%;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0c 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* UI Overlays */
+        .fidget-label {
+            position: absolute;
+            top: 80px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .fidget-label h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to bottom, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0.9;
+        }
+
+        .scroll-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            animation: bounce 2s infinite;
+            z-index: 40;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);}
+            40% {transform: translateY(-8px) translateX(-50%);}
+            60% {transform: translateY(-4px) translateX(-50%);}
+        }
+
+        /* Footer / Copyright Area */
+        .fidget-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .social-link {
+            color: var(--neon-blue);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        .social-link:hover {
+            color: white;
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .copyright {
+            font-size: 0.6rem;
+            opacity: 0.5;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Fidget Spinner & Motion Blur */
+        .spinner-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            cursor: grab;
+            touch-action: none;
+            transition: filter 0.05s linear;
+        }
+        .spinner-container:active { cursor: grabbing; }
+
+        .turbo-btn {
+            margin-top: 40px;
+            padding: 12px 30px;
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            border-radius: 50px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+        }
+        .turbo-btn:active {
+            transform: scale(0.95);
+            background: var(--neon-blue);
+            color: black;
+        }
+
+        /* Piano Styling - Expanded Layout */
+        .piano-container {
+            display: flex;
+            background: #000;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            max-width: 95vw;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .piano-container::-webkit-scrollbar { display: none; }
+
+        .piano-key {
+            min-width: 38px;
+            height: 180px;
+            background: linear-gradient(to bottom, #eee 0%, #fff 100%);
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            cursor: pointer;
+            z-index: 1;
+            flex-shrink: 0;
+            transition: transform 0.05s ease;
+        }
+        .piano-key:active, .piano-key.active { 
+            background: #ddd; 
+            height: 176px; 
+            margin-top: 4px; 
+            box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
+        }
+        .piano-key.black {
+            min-width: 24px;
+            height: 110px;
+            background: linear-gradient(to bottom, #333 0%, #000 100%);
+            margin-left: -12px;
+            margin-right: -12px;
+            z-index: 2;
+            border: 1px solid #111;
+        }
+        .piano-key.black:active, .piano-key.black.active { 
+            height: 108px; 
+            background: #222; 
+        }
+
+        /* Toggle Station */
+        .toggle-box {
+            background: #222;
+            padding: 30px;
+            border-radius: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .switch {
+            width: 40px;
+            height: 80px;
+            background: #111;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+        .switch-handle {
+            width: 100%;
+            height: 50%;
+            background: #444;
+            border-radius: 8px;
+            position: absolute;
+            top: 0;
+            transition: 0.1s;
+        }
+        .switch.on .switch-handle { top: 50%; background: var(--neon-blue); }
+
+        /* Bubble Wrap */
+        .bubble-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+        .bubble {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 4px 6px rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        .bubble.popped { transform: scale(0.9); background: rgba(255, 255, 255, 0.02); }
+    </style>
+</head>
+<body>
+
+    <header class="fixed top-0 left-0 w-full p-8 flex justify-between items-center z-50 pointer-events-none">
+        <h1 class="text-2xl font-black italic tracking-tighter pointer-events-auto">NAZ<span class="text-blue-500">SATIS</span></h1>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 px-4 py-1 rounded-full text-[10px] tracking-widest uppercase font-bold">
+            Fidget Lab v5.3
+        </div>
+    </header>
+
+    <div class="scroll-hint">Swipe for more</div>
+
+    <div id="feed-container">
+        
+        <!-- FIDGET 1: SPINNER -->
+        <section class="fidget-section">
+            <div class="fidget-label">
+                <h2>Turbo</h2>
+                <p class="text-xs uppercase tracking-[0.3em] opacity-40">144Hz Simulation</p>
+            </div>
+            <div class="spinner-container" id="spinner-wrap">
+                <svg id="spinner" viewBox="0 0 200 200" width="100%" height="100%">
+                    <g id="spinner-mesh" transform="rotate(0, 100, 100)">
+                        <circle cx="100" cy="100" r="40" fill="#222" stroke="#444" stroke-width="2"/>
+                        <circle cx="100" cy="35" r="30" fill="#111" stroke="#444" stroke-width="2"/>
+                        <circle cx="43" cy="132" r="30" fill="#111" stroke="#444" stroke-width="2"/>
+                        <circle cx="157" cy="132" r="30" fill="#111" stroke="#444" stroke-width="2"/>
+                        <circle cx="100" cy="35" r="10" fill="var(--neon-blue)"/>
+                        <circle cx="43" cy="132" r="10" fill="var(--neon-blue)"/>
+                        <circle cx="157" cy="132" r="10" fill="var(--neon-blue)"/>
+                    </g>
+                </svg>
+            </div>
+            <button class="turbo-btn" id="turbo-spin">Boost Spin</button>
+        </section>
+
+        <!-- FIDGET 2: EXPANDED PIANO -->
+        <section class="fidget-section">
+            <div class="fidget-label">
+                <h2>Ebony</h2>
+                <p class="text-xs uppercase tracking-[0.3em] opacity-40">Grand Synth</p>
+            </div>
+            <div class="piano-container" id="piano">
+                <!-- Octave 4 -->
+                <div class="piano-key" data-freq="261.63"></div> <!-- C4 -->
+                <div class="piano-key black" data-freq="277.18"></div> <!-- C#4 -->
+                <div class="piano-key" data-freq="293.66"></div> <!-- D4 -->
+                <div class="piano-key black" data-freq="311.13"></div> <!-- D#4 -->
+                <div class="piano-key" data-freq="329.63"></div> <!-- E4 -->
+                <div class="piano-key" data-freq="349.23"></div> <!-- F4 -->
+                <div class="piano-key black" data-freq="369.99"></div> <!-- F#4 -->
+                <div class="piano-key" data-freq="392.00"></div> <!-- G4 -->
+                <div class="piano-key black" data-freq="415.30"></div> <!-- G#4 -->
+                <div class="piano-key" data-freq="440.00"></div> <!-- A4 -->
+                <div class="piano-key black" data-freq="466.16"></div> <!-- A#4 -->
+                <div class="piano-key" data-freq="493.88"></div> <!-- B4 -->
+                <!-- Octave 5 -->
+                <div class="piano-key" data-freq="523.25"></div> <!-- C5 -->
+                <div class="piano-key black" data-freq="554.37"></div> <!-- C#5 -->
+                <div class="piano-key" data-freq="587.33"></div> <!-- D5 -->
+                <div class="piano-key black" data-freq="622.25"></div> <!-- D#5 -->
+                <div class="piano-key" data-freq="659.25"></div> <!-- E5 -->
+                <div class="piano-key" data-freq="698.46"></div> <!-- F5 -->
+                <div class="piano-key black" data-freq="739.99"></div> <!-- F#5 -->
+                <div class="piano-key" data-freq="783.99"></div> <!-- G5 -->
+            </div>
+            <p class="mt-6 text-[10px] uppercase opacity-30 tracking-widest">Scroll piano horizontally for more keys</p>
+        </section>
+
+        <!-- FIDGET 3: TOGGLE PANEL -->
+        <section class="fidget-section">
+            <div class="fidget-label">
+                <h2>Switch</h2>
+                <p class="text-xs uppercase tracking-[0.3em] opacity-40">Tactile Array</p>
+            </div>
+            <div class="toggle-box" id="toggle-array"></div>
+        </section>
+
+        <!-- FIDGET 4: BUBBLE WRAP -->
+        <section class="fidget-section">
+            <div class="fidget-label">
+                <h2>Popper</h2>
+                <p class="text-xs uppercase tracking-[0.3em] opacity-40">Infinite Sheet</p>
+            </div>
+            <div class="bubble-grid" id="bubble-grid"></div>
+            <button onclick="resetBubbles()" class="mt-8 text-[10px] uppercase tracking-widest border border-white/20 px-6 py-2 rounded-full hover:bg-white/10 transition">Reset Sheet</button>
+        </section>
+    </div>
+
+    <footer class="fidget-footer">
+        <a href="https://www.tiktok.com/@iphone_melt" target="_blank" class="social-link">
+            FOLLOW @IP12PMHYPE ON TIKTOK
+        </a>
+        <p class="copyright">
+            &copy; 2026 NAZSATIS LABS • ALL RIGHTS RESERVED
+        </p>
+    </footer>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(f, v = 0.05, d = 0.1, type = 'sine') {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = type;
+            o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + d);
+        }
+
+        // --- SPINNER ENGINE ---
+        const spinnerSvg = document.getElementById('spinner');
+        const spinnerWrap = document.getElementById('spinner-wrap');
+        const mesh = document.getElementById('spinner-mesh');
+        const turboBtn = document.getElementById('turbo-spin');
+        
+        let rot = 0, vel = 0, dragging = false, lastA = 0, lastT = 0;
+        
+        function getA(e) {
+            const r = spinnerSvg.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - (r.left + r.width/2);
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - (r.top + r.height/2);
+            return Math.atan2(y, x);
+        }
+
+        spinnerSvg.addEventListener('mousedown', e => { dragging = true; lastA = getA(e); lastT = performance.now(); });
+        spinnerSvg.addEventListener('touchstart', e => { dragging = true; lastA = getA(e); lastT = performance.now(); });
+        
+        window.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            const curA = getA(e);
+            let d = curA - lastA;
+            if (d > Math.PI) d -= Math.PI*2; if (d < -Math.PI) d += Math.PI*2;
+            rot += d;
+            vel = d / (performance.now() - lastT) * 16;
+            lastA = curA; lastT = performance.now();
+        });
+
+        window.addEventListener('mouseup', () => dragging = false);
+        window.addEventListener('touchend', () => dragging = false);
+
+        turboBtn.addEventListener('click', () => {
+            vel += 0.8; 
+            playSound(100, 0.1, 0.2, 'sine');
+        });
+
+        // --- PIANO ---
+        document.querySelectorAll('.piano-key').forEach(key => {
+            const handleNote = (e) => {
+                e.preventDefault();
+                const freq = parseFloat(key.dataset.freq);
+                // Thicker sound for larger range
+                playSound(freq, 0.15, 0.6, 'triangle');
+                key.classList.add('active');
+                setTimeout(() => key.classList.remove('active'), 150);
+            };
+            key.addEventListener('mousedown', handleNote);
+            key.addEventListener('touchstart', handleNote);
+        });
+
+        // --- TOGGLE ARRAY ---
+        const tBox = document.getElementById('toggle-array');
+        for(let i=0; i<5; i++) {
+            const s = document.createElement('div');
+            s.className = 'switch';
+            s.innerHTML = '<div class="switch-handle"></div>';
+            s.onclick = () => {
+                s.classList.toggle('on');
+                playSound(s.classList.contains('on') ? 400 : 200, 0.1, 0.05, 'square');
+                if(navigator.vibrate) navigator.vibrate(20);
+            };
+            tBox.appendChild(s);
+        }
+
+        // --- BUBBLE WRAP ---
+        const bGrid = document.getElementById('bubble-grid');
+        function resetBubbles() {
+            bGrid.innerHTML = '';
+            for(let i=0; i<24; i++) {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                b.onclick = () => {
+                    if(!b.classList.contains('popped')) {
+                        b.classList.add('popped');
+                        playSound(800 + Math.random()*400, 0.05, 0.05);
+                        if(navigator.vibrate) navigator.vibrate(10);
+                    }
+                };
+                bGrid.appendChild(b);
+            }
+        }
+        resetBubbles();
+
+        // --- ANIMATION & BLUR ENGINE ---
+        function update() {
+            if(!dragging) { 
+                rot += vel; 
+                vel *= 0.99; 
+            }
+            
+            const blurAmount = Math.min(Math.abs(vel) * 15, 12); 
+            spinnerWrap.style.filter = `blur(${blurAmount}px)`;
+            
+            mesh.setAttribute('transform', `rotate(${rot * (180/Math.PI)}, 100, 100)`);
+            requestAnimationFrame(update);
+        }
+        update();
+    </script>
+</body>
+</html>
